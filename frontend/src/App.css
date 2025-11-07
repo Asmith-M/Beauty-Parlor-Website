@@ -1,0 +1,11 @@
+/* App Component Styling */
+.App {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Ensure main content takes available space */
+.App > div {
+  flex: 1;
+}
