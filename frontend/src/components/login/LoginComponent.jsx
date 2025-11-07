@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import { Mail, Lock, LogIn, UserPlus, Eye, EyeOff } from 'lucide-react';
 
 const Login = () => {
     const [formData, setFormData] = useState({
@@ -9,6 +10,8 @@ const Login = () => {
         password: '',
     });
     const [error, setError] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
     const navigate = useNavigate();
 
     const handleChange = (e) => {
@@ -21,72 +24,159 @@ const Login = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setIsLoading(true);
         try {
             const res = await axios.post('http://localhost:5000/api/auth/login', formData);
             localStorage.setItem('token', res.data.token);
-            toast.success("Login Successful!");
+            toast.success("🎉 Login Successful! Welcome back!");
             setError('');
             navigate("/account");
         } catch (err) {
             console.error('Error logging in:', err.response?.data?.msg || 'Server error');
-            toast.error(err.response?.data?.msg || 'Incorrect email or password.');
-            setError(err.response?.data?.msg || 'Incorrect email or password.');
+            const errorMsg = err.response?.data?.msg || 'Incorrect email or password.';
+            toast.error(errorMsg);
+            setError(errorMsg);
+        } finally {
+            setIsLoading(false);
         }
     };
 
     return (
-        <div className="flex justify-center items-center min-h-screen bg-gradient-to-r from-bg to-bg-secondary p-5">
-            <form onSubmit={handleSubmit} className="w-full max-w-4xl min-h-[500px] bg-white rounded-2xl shadow-lg flex overflow-hidden transition-shadow duration-300 hover:shadow-xl">
-                <div className="hidden md:flex flex-col items-center justify-center text-center text-white bg-gradient-to-r from-primary to-primary-light w-2/5 p-10 relative overflow-hidden">
-                    <div className="absolute top-0 left-0 w-full h-full bg-radial-gradient opacity-50 animate-pulse"></div>
-                    <div className="relative z-10">
-                        <p className="font-serif text-3xl font-semibold mb-6">Hello, Welcome!</p>
-                        <p className="text-lg mb-4">Don't have an account?</p>
-                        <button
-                            type="button"
-                            onClick={() => navigate("/register")}
-                            className="bg-white/20 text-white border-2 border-white/40 px-8 py-3 rounded-full font-bold text-base transition-all duration-200 ease-in-out backdrop-blur-sm hover:bg-white/30 hover:border-white/60 transform hover:-translate-y-0.5"
-                        >
-                            Register
-                        </button>
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 via-pink-50 to-purple-100 p-5 py-20">
+            <div className="w-full max-w-5xl bg-white rounded-3xl shadow-2xl overflow-hidden">
+                <div className="flex flex-col md:flex-row">
+                    {/* Left Side - Branding */}
+                    <div className="md:w-2/5 bg-gradient-to-br from-primary via-primary-dark to-primary-light p-12 text-white flex flex-col justify-center relative overflow-hidden">
+                        <div className="absolute inset-0 opacity-10">
+                            <div className="absolute top-0 right-0 w-64 h-64 bg-secondary rounded-full blur-3xl"></div>
+                            <div className="absolute bottom-0 left-0 w-64 h-64 bg-accent rounded-full blur-3xl"></div>
+                        </div>
+                        <div className="relative z-10">
+                            <div className="mb-8">
+                                <div className="w-20 h-20 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center mb-6">
+                                    <LogIn size={40} />
+                                </div>
+                                <h2 className="font-serif text-4xl font-bold mb-4">Welcome Back!</h2>
+                                <p className="text-lg text-gray-100 mb-8">Sign in to continue your beauty journey with us.</p>
+                            </div>
+                            <div className="space-y-4">
+                                <p className="text-gray-200">Don't have an account?</p>
+                                <button
+                                    type="button"
+                                    onClick={() => navigate("/register")}
+                                    className="flex items-center gap-2 bg-white/20 backdrop-blur-sm text-white border-2 border-white/40 px-8 py-3 rounded-full font-bold transition-all duration-300 hover:bg-white/30 hover:border-white/60 hover:scale-105"
+                                >
+                                    <UserPlus size={20} />
+                                    Create Account
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Right Side - Form */}
+                    <div className="md:w-3/5 p-12">
+                        <h1 className="font-serif text-4xl font-bold text-primary mb-2">Sign In</h1>
+                        <p className="text-gray-600 mb-8">Enter your credentials to access your account</p>
+                        
+                        {error && (
+                            <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-6 rounded-lg">
+                                <p className="text-red-700 text-sm">{error}</p>
+                            </div>
+                        )}
+
+                        <form onSubmit={handleSubmit} className="space-y-6">
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                    Email Address
+                                </label>
+                                <div className="relative">
+                                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                        <Mail className="text-gray-400" size={20} />
+                                    </div>
+                                    <input
+                                        type="email"
+                                        name="email"
+                                        value={formData.email}
+                                        onChange={handleChange}
+                                        placeholder="you@example.com"
+                                        required
+                                        className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl text-base transition-all duration-200 focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10"
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                    Password
+                                </label>
+                                <div className="relative">
+                                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                        <Lock className="text-gray-400" size={20} />
+                                    </div>
+                                    <input
+                                        type={showPassword ? "text" : "password"}
+                                        name="password"
+                                        value={formData.password}
+                                        onChange={handleChange}
+                                        placeholder="••••••••"
+                                        required
+                                        className="w-full pl-12 pr-12 py-3 border-2 border-gray-200 rounded-xl text-base transition-all duration-200 focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-primary transition-colors"
+                                    >
+                                        {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                    </button>
+                                </div>
+                            </div>
+
+                            <button 
+                                type="submit" 
+                                disabled={isLoading}
+                                className="w-full bg-gradient-to-r from-primary to-primary-dark text-white px-6 py-4 rounded-xl font-bold text-lg transition-all duration-300 hover:shadow-xl hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2"
+                            >
+                                {isLoading ? (
+                                    <>
+                                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                        Signing in...
+                                    </>
+                                ) : (
+                                    <>
+                                        <LogIn size={20} />
+                                        Sign In
+                                    </>
+                                )}
+                            </button>
+                        </form>
+
+                        <div className="mt-8 text-center">
+                            <p className="text-gray-500 text-sm mb-4">Or continue with</p>
+                            <div className="flex justify-center gap-4">
+                                <button 
+                                    type="button" 
+                                    className="p-3 border-2 border-gray-200 rounded-xl hover:border-primary hover:bg-primary/5 transition-all duration-200 hover:scale-110"
+                                >
+                                    <img src="/google-icon.png" alt="Google" className="w-6 h-6" />
+                                </button>
+                                <button 
+                                    type="button" 
+                                    className="p-3 border-2 border-gray-200 rounded-xl hover:border-primary hover:bg-primary/5 transition-all duration-200 hover:scale-110"
+                                >
+                                    <img src="/facebook-icon.png" alt="Facebook" className="w-6 h-6" />
+                                </button>
+                                <button 
+                                    type="button" 
+                                    className="p-3 border-2 border-gray-200 rounded-xl hover:border-primary hover:bg-primary/5 transition-all duration-200 hover:scale-110"
+                                >
+                                    <img src="/microsoft-icon.png" alt="Microsoft" className="w-6 h-6" />
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div className="w-full md:w-3/5 p-12 flex flex-col justify-center">
-                    <h1 className="font-serif text-4xl font-bold text-primary mb-8">Login</h1>
-                    {error && <p className="text-red-600 bg-red-100 border border-red-200 px-4 py-3 rounded-lg mb-6 text-center text-sm">{error}</p>}
-                    <input
-                        type="email"
-                        name="email"
-                        value={formData.email}
-                        onChange={handleChange}
-                        placeholder="Email"
-                        required
-                        className="w-full px-4 py-3 my-2 border-2 border-gray-200 rounded-lg text-base transition-all duration-200 ease-in-out focus:outline-none focus:border-accent focus:shadow-sm"
-                    />
-                    <input
-                        type="password"
-                        name="password"
-                        value={formData.password}
-                        onChange={handleChange}
-                        placeholder="Password"
-                        required
-                        className="w-full px-4 py-3 my-2 border-2 border-gray-200 rounded-lg text-base transition-all duration-200 ease-in-out focus:outline-none focus:border-accent focus:shadow-sm"
-                    />
-                    <button type="submit" className="w-full bg-gradient-to-r from-secondary to-secondary-dark text-white px-6 py-3 rounded-lg font-bold text-base mt-5 transition-all duration-200 ease-in-out shadow-md hover:shadow-lg transform hover:-translate-y-0.5">Login</button>
-                    <p className="mt-6 text-center text-gray-500 text-sm">or login with social platforms</p>
-                    <div className="flex justify-center gap-4 mt-5">
-                        <button type="button" className="flex items-center justify-center border-2 border-gray-200 p-3 rounded-lg w-12 h-12 bg-white transition-all duration-200 ease-in-out hover:border-accent hover:-translate-y-0.5 hover:shadow-md">
-                            <img src="/google-icon.png" alt="Google" className="w-6 h-6 object-contain" />
-                        </button>
-                        <button type="button" className="flex items-center justify-center border-2 border-gray-200 p-3 rounded-lg w-12 h-12 bg-white transition-all duration-200 ease-in-out hover:border-accent hover:-translate-y-0.5 hover:shadow-md">
-                            <img src="/facebook-icon.png" alt="Facebook" className="w-6 h-6 object-contain" />
-                        </button>
-                        <button type="button" className="flex items-center justify-center border-2 border-gray-200 p-3 rounded-lg w-12 h-12 bg-white transition-all duration-200 ease-in-out hover:border-accent hover:-translate-y-0.5 hover:shadow-md">
-                            <img src="/microsoft-icon.png" alt="Microsoft" className="w-6 h-6 object-contain" />
-                        </button>
-                    </div>
-                </div>
-            </form>
+            </div>
         </div>
     );
 };

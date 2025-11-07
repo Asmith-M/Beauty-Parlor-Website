@@ -3,6 +3,7 @@ import axios from "axios";
 import { useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
 import LoadingSpinner from "../../components/loading/loadingSpinner";
+import TimeSlotPicker from "../../components/TimeSlotPicker";
 import "./BookingPage.css";
 
 const BookingPage = () => {
@@ -19,7 +20,8 @@ const BookingPage = () => {
     });
     const [message, setMessage] = useState("");
     const [isAvailable, setIsAvailable] = useState(null);
-    const [isLoading, setIsLoading] = useState(false); // State for the spinner
+    const [isLoading, setIsLoading] = useState(false);
+    const [bookedSlots, setBookedSlots] = useState([]);
 
     useEffect(() => {
         if (prefilledService) {
@@ -27,19 +29,34 @@ const BookingPage = () => {
         }
     }, [prefilledService]);
 
-    const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
+    useEffect(() => {
+        if (formData.service && formData.date) {
+            fetchBookedSlots();
+        }
+    }, [formData.service, formData.date]);
 
-        if (e.target.name === "date" || e.target.name === "time") {
-            checkAvailability(formData.service, e.target.value, e.target.name === "date" ? formData.time : e.target.value);
+    const fetchBookedSlots = async () => {
+        try {
+            const response = await axios.get(
+                `http://localhost:5000/api/bookings/booked-slots?service=${formData.service}&date=${formData.date}`
+            );
+            setBookedSlots(response.data.bookedSlots || []);
+        } catch (error) {
+            console.error("Error fetching booked slots:", error);
         }
     };
 
-    const checkAvailability = async (service, dateOrTime, changedField) => {
-        if (service && formData.date && formData.time) {
-            const date = changedField === "date" ? dateOrTime : formData.date;
-            const time = changedField === "time" ? dateOrTime : formData.time;
+    const handleChange = (e) => {
+        setFormData({ ...formData, [e.target.name]: e.target.value });
+    };
 
+    const handleTimeSelect = (time) => {
+        setFormData({ ...formData, time });
+        checkAvailability(formData.service, formData.date, time);
+    };
+
+    const checkAvailability = async (service, date, time) => {
+        if (service && date && time) {
             try {
                 const response = await fetch(
                     `http://localhost:5000/api/bookings/check-availability?service=${service}&date=${date}&time=${time}`
@@ -47,7 +64,9 @@ const BookingPage = () => {
                 const data = await response.json();
                 setIsAvailable(data.available);
                 if (!data.available) {
-                    toast.error(data.message);
+                    toast.error(data.message || "This time slot is not available.");
+                } else {
+                    toast.success("Time slot is available!");
                 }
             } catch (error) {
                 console.error("Error checking availability:", error);
@@ -63,15 +82,21 @@ const BookingPage = () => {
             return;
         }
 
-        setIsLoading(true); // Show spinner when submission begins
+        if (!formData.time) {
+            toast.error("Please select a time slot.");
+            return;
+        }
+
+        setIsLoading(true);
         try {
             const token = localStorage.getItem("token");
             await axios.post("http://localhost:5000/api/bookings", formData, {
                 headers: { Authorization: `Bearer ${token}` },
             });
-            toast.success("Booking Confirmed! See you soon.");
+            toast.success("🎉 Booking Confirmed! See you soon.");
             setMessage("Booking successful!");
-            setFormData({ service: prefilledService || "", date: "", time: "", name: "", email: "" }); // Reset form
+            setFormData({ service: prefilledService || "", date: "", time: "", name: "", email: "" });
+            setIsAvailable(null);
         } catch (error) {
             console.error("Error making booking:", error.response || error.message);
             if (error.response?.status === 401) {
@@ -83,92 +108,130 @@ const BookingPage = () => {
                 setMessage("Something went wrong. Please try again.");
             }
         } finally {
-            setIsLoading(false); // Hide spinner after submission is complete
+            setIsLoading(false);
         }
     };
 
     return (
         <div className="booking-container">
-            <h1 className="text-4xl font-serif font-bold text-primary mb-4">Book a Service</h1>
+            <div className="booking-header">
+                <h1 className="text-4xl font-serif font-bold text-primary mb-2">Book Your Appointment</h1>
+                <p className="text-gray-600 mb-8">Choose your preferred service, date, and time</p>
+            </div>
 
-            {/* Show spinner during loading */}
             {isLoading && <LoadingSpinner />}
 
-            <form className="booking-form" onSubmit={handleSubmit}>
+            <form className="booking-form glass-card" onSubmit={handleSubmit}>
                 {/* Service Selection */}
                 <div className="form-group">
-                    <label htmlFor="service">Service</label>
+                    <label htmlFor="service">
+                        <svg className="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Select Service
+                    </label>
                     <select
                         id="service"
                         name="service"
                         value={formData.service}
                         onChange={handleChange}
                         required
+                        className="service-select"
                     >
-                        <option value="">Select a Service</option>
-                        <option value="haircut">Haircut</option>
-                        <option value="facial">Facial</option>
-                        <option value="manicure">Manicure</option>
-                        <option value="pedicure">Pedicure</option>
+                        <option value="">Choose a Service</option>
+                        <option value="haircut">💇 Haircut & Styling</option>
+                        <option value="facial">✨ Facial Treatment</option>
+                        <option value="manicure">💅 Manicure</option>
+                        <option value="pedicure">🦶 Pedicure</option>
                     </select>
                 </div>
 
                 {/* Date Selection */}
                 <div className="form-group">
-                    <label htmlFor="date">Date</label>
+                    <label htmlFor="date">
+                        <svg className="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        Select Date
+                    </label>
                     <input
                         id="date"
                         type="date"
                         name="date"
                         value={formData.date}
                         onChange={handleChange}
+                        min={new Date().toISOString().split('T')[0]}
                         required
+                        className="date-input"
                     />
                 </div>
 
-                {/* Time Field */}
-                <div className="form-group">
-                    <label htmlFor="time">Time</label>
-                    <input
-                        id="time"
-                        type="time"
-                        name="time"
-                        value={formData.time}
-                        onChange={handleChange}
+                {/* Time Slot Picker */}
+                {formData.service && formData.date && (
+                    <TimeSlotPicker
+                        selectedTime={formData.time}
+                        onTimeSelect={handleTimeSelect}
+                        bookedSlots={bookedSlots}
                     />
-                </div>
+                )}
 
                 {/* Name Field */}
                 <div className="form-group">
-                    <label htmlFor="name">Name</label>
+                    <label htmlFor="name">
+                        <svg className="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                        Your Name
+                    </label>
                     <input
                         id="name"
                         type="text"
                         name="name"
                         value={formData.name}
                         onChange={handleChange}
+                        placeholder="Enter your full name"
                         required
                     />
                 </div>
 
                 {/* Email Field */}
                 <div className="form-group">
-                    <label htmlFor="email">Email</label>
+                    <label htmlFor="email">
+                        <svg className="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                        </svg>
+                        Email Address
+                    </label>
                     <input
                         id="email"
                         type="email"
                         name="email"
                         value={formData.email}
                         onChange={handleChange}
+                        placeholder="your.email@example.com"
                         required
                     />
                 </div>
 
-                <button type="submit" disabled={isLoading || isAvailable === false}>
-                    {isLoading ? "Submitting..." : "Book"}
+                <button type="submit" disabled={isLoading || isAvailable === false} className="submit-btn">
+                    {isLoading ? (
+                        <>
+                            <svg className="animate-spin h-5 w-5 mr-2 inline" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Processing...
+                        </>
+                    ) : (
+                        <>
+                            <svg className="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                            Confirm Booking
+                        </>
+                    )}
                 </button>
             </form>
-            {message && <p className="success-message">{message}</p>}
         </div>
     );
 };
