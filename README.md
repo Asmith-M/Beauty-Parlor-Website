@@ -31,6 +31,20 @@ A modern, full-stack web application for a beauty parlour, built with React for 
 - **Contact Form**: Send messages directly to the parlour
 - **Responsive Design**: Mobile-friendly interface built with Tailwind CSS
 
+## Project Screenshots
+
+### Homepage
+![Beauty Parlour Homepage](frontend/public/image1.png)
+
+### Sign In Page
+![Services Overview](frontend/public/image2.png)
+
+### Booking System
+![Appointment Booking](frontend/public/image3.png)
+
+### Admin Dashboard
+![Admin Management](frontend/public/image4.png)
+
 ### Admin Features
 - **Admin Dashboard**: Comprehensive dashboard for managing bookings
 - **Booking Statistics**: View total, completed, and upcoming bookings

@@ -1,4 +1,5 @@
 import React from 'react';
+import { CheckCircle } from 'lucide-react';
 
 const TimeSlotPicker = ({ selectedTime, onTimeSelect, availableSlots = [], bookedSlots = [] }) => {
   // Generate time slots from 9 AM to 6 PM
@@ -19,9 +20,8 @@ const TimeSlotPicker = ({ selectedTime, onTimeSelect, availableSlots = [], booke
   const isAvailable = (time) => availableSlots.length === 0 || availableSlots.includes(time);
 
   return (
-    <div className="time-slot-picker">
-      <label className="block mb-3 font-semibold text-primary text-base">Select Time Slot</label>
-      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
+    <div className="bg-white p-6 rounded-xl border-2 border-gray-100">
+      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
         {timeSlots.map((time) => {
           const booked = isBooked(time);
           const available = isAvailable(time);
@@ -34,11 +34,11 @@ const TimeSlotPicker = ({ selectedTime, onTimeSelect, availableSlots = [], booke
               onClick={() => !booked && available && onTimeSelect(time)}
               disabled={booked || !available}
               className={`
-                px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200
-                ${selected 
-                  ? 'bg-gradient-to-r from-secondary to-secondary-dark text-white shadow-md scale-105' 
-                  : booked 
-                    ? 'bg-gray-200 text-gray-400 cursor-not-allowed line-through' 
+                px-3 py-3 rounded-xl text-sm font-medium transition-all duration-200
+                ${selected
+                  ? 'bg-gradient-to-r from-secondary to-secondary-dark text-white shadow-lg scale-105'
+                  : booked
+                    ? 'bg-gray-200 text-gray-400 cursor-not-allowed line-through'
                     : available
                       ? 'bg-white border-2 border-gray-200 text-gray-700 hover:border-accent hover:bg-accent/10 hover:scale-105'
                       : 'bg-gray-100 text-gray-400 cursor-not-allowed'
@@ -46,15 +46,18 @@ const TimeSlotPicker = ({ selectedTime, onTimeSelect, availableSlots = [], booke
               `}
             >
               {time}
-              {booked && <span className="block text-xs mt-0.5">Booked</span>}
+              {booked && <span className="block text-xs mt-1">Booked</span>}
             </button>
           );
         })}
       </div>
       {selectedTime && (
-        <p className="mt-3 text-sm text-green-600 font-medium">
-          ✓ Selected: {selectedTime}
-        </p>
+        <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+          <p className="text-sm text-green-700 font-medium flex items-center">
+            <CheckCircle size={16} className="mr-2" />
+            Selected: {selectedTime}
+          </p>
+        </div>
       )}
     </div>
   );
